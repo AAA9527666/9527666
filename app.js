@@ -3,17 +3,30 @@ import { handler } from './src/template.js'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { cors } from 'hono/cors'
-import { serveStatic } from '@hono/node-server/serve-static' // 新增静态服务依赖
+import { serveStatic } from '@hono/node-server/serve-static'
 import config from './src/config.js'
 import { get_runtime, get_url } from './src/util.js'
+import { readFile } from 'fs/promises'
+import { join } from 'path'
 
 const app = new Hono()
 
 app.use('*', cors())
 app.use('*', logger())
-
-// ✅ 关键：托管 public 文件夹下的静态文件
+// 托管静态文件（保留，方便后续用）
 app.use('/*', serveStatic({ root: './public' }))
+
+// ✅ 新增：专门读取 yy.txt 的接口（兜底方案，100%能访问）
+app.get('/yy.txt', async (c) => {
+  try {
+    const filePath = join(process.cwd(), 'yy.txt')
+    const content = await readFile(filePath, 'utf8')
+    return c.text(content)
+  } catch (err) {
+    console.error('读取 yy.txt 失败:', err)
+    return c.text('文件读取失败', 500)
+  }
+})
 
 app.get('/api', api)
 app.get('/test', handler)
