@@ -3,6 +3,7 @@ import { handler } from './src/template.js'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { cors } from 'hono/cors'
+import { serveStatic } from '@hono/node-server/serve-static' // 新增静态服务依赖
 import config from './src/config.js'
 import { get_runtime, get_url } from './src/util.js'
 
@@ -10,10 +11,13 @@ const app = new Hono()
 
 app.use('*', cors())
 app.use('*', logger())
+
+// ✅ 关键：托管 public 文件夹下的静态文件
+app.use('/*', serveStatic({ root: './public' }))
+
 app.get('/api', api)
 app.get('/test', handler)
 app.get('/', (c) => {
-
     return c.html(`
                     <html>
                         <head>
